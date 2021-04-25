@@ -1,4 +1,4 @@
-const db = require('../bdd/dabatase');
+const db = require('../config/dabatase');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -40,14 +40,16 @@ exports.registration = (req, res, next) => {
                 email: req.body.email,
                 password: hash
             };
-            const sql = `INSERT INTO Users VALUES (NULL, '${user.firstName}', '${user.lastName}', '${user.email}', '${user.password}', NULL, NULL, DEFAULT);`
+            const profilePicDefaultUrl = `${req.protocol}://${req.get('host')}/images/profile-pic-user-default/profile-user.svg`
+
+            const sql = `INSERT INTO Users VALUES (NULL, '${user.firstName}', '${user.lastName}', '${user.email}', '${user.password}', NULL, '${profilePicDefaultUrl}', DEFAULT);`
             db.query(sql, function (err, result) {
               if (err) throw err;
               console.log("1 record inserted, ID: " + result.insertId);
               res.status(201).json({ message: 'Compte créé !' });
             });
         })
-        .catch(error => res.status(500).json({error}));        
+        .catch(error => res.status(500).json({ error }));        
     });
 
 };
@@ -75,7 +77,7 @@ exports.login = (req, res, next) => {
         bcrypt.compare(req.body.password, user.password_user)
         .then(valid => {
             if(!valid){
-                return res.status(401).json({error: 'Mot de passe incorrect'})
+                return res.status(401).json({ error: 'Mot de passe incorrect' })
             }
             res.status(200).json({
                 userId: user.id,
@@ -84,11 +86,11 @@ exports.login = (req, res, next) => {
                     process.env.USER_TOKEN,
                     { expiresIn: '24h' }
                 ),
-                message:("Authentification réussie !"),
+                message:("Authentification réussie !")
             });
             
         })
-        .catch(error => res.status(500).json({error})); 
+        .catch(error => res.status(500).json({ error })); 
     });
 }
 
@@ -101,8 +103,17 @@ exports.getOneUser = (req, res, next) => {
     db.query(sql, function (err, result, fields) {
         if (err) throw err;
 
-        res.status(200).json({result});
+        res.status(200).json({ result });
     });
+}
+
+exports.getAllUsers = (req, res, next) => {
+    const sql = `SELECT * FROM Users;`
+    db.query(sql, function (err, result, fields) {
+        if(err) throw err;
+
+        res.status(200).json({ result })
+    })
 }
 
 
@@ -111,6 +122,6 @@ exports.deleteUserAccount = (req, res, next) => {
     db.query(sql, function (err, result, fields) {
         if (err) throw err;
 
-        res.status(200).json({message: 'Compte supprimé !'});
+        res.status(200).json({ message: 'Compte supprimé !' });
     });
 }
