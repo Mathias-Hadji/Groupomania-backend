@@ -1,6 +1,7 @@
 const db = require('../config/dabatase');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
 
 const firstNameValidator = require('../middleware/first-name-validator');
 const lastNameValidator = require('../middleware/last-name-validator');
@@ -40,18 +41,53 @@ exports.registration = (req, res, next) => {
                 email: req.body.email,
                 password: hash
             };
+
             const profilePicDefaultUrl = `${req.protocol}://${req.get('host')}/images/profile-pic-user-default/profile-user.svg`
 
-            const sql = `INSERT INTO Users VALUES (NULL, '${user.firstName}', '${user.lastName}', '${user.email}', '${user.password}', NULL, '${profilePicDefaultUrl}', DEFAULT);`
+            const sql = `INSERT INTO Users VALUES (NULL, '${user.firstName}', '${user.lastName}', '${user.email}', '${user.password}', '${profilePicDefaultUrl}', DEFAULT, DEFAULT);`
             db.query(sql, function (err, result) {
               if (err) throw err;
               console.log("1 record inserted, ID: " + result.insertId);
+
+              // Create directory images/users/user-ID
+              fs.mkdir(`./images/users/id-${result.insertId}`, function(err) {
+                if (err) {
+                    console.log(err)
+                } else {
+                    console.log("New directory successfully created.")
+
+                    // Create directory images/users/user-ID/profile
+                    fs.mkdir(`./images/users/id-${result.insertId}/profile`, function(err) {
+                        if (err) {
+                            console.log(err)
+                        } else {
+                            console.log("New directory successfully created.")
+
+                            // Create directory images/users/user-ID/profile/profile-pic
+                            fs.mkdir(`./images/users/id-${result.insertId}/profile/profile-pic`, function(err) {
+                                if (err) {
+                                    console.log(err)
+                                } else {
+                                    console.log("New directory successfully created.")
+                                }
+                            })
+                        }
+                    })
+                    // Create directory images/users/user-ID/publications
+                    fs.mkdir(`./images/users/id-${result.insertId}/publications`, function(err) {
+                        if (err) {
+                            console.log(err)
+                        } else {
+                            console.log("New directory successfully created.")
+                        }
+                    }) 
+                }
+              })         
               res.status(201).json({ message: 'Compte créé !' });
-            });
+            }); 
         })
         .catch(error => res.status(500).json({ error }));        
     });
-
 };
 
 
@@ -95,8 +131,6 @@ exports.login = (req, res, next) => {
 }
 
 
-
-
 exports.getOneUser = (req, res, next) => {
 
     const sql = `SELECT * FROM Users WHERE id='${req.params.id}';`
@@ -117,7 +151,22 @@ exports.getAllUsers = (req, res, next) => {
 }
 
 
+
+
 exports.deleteUserAccount = (req, res, next) => {
+
+    // directory path
+    const dir = `images/users/id-${req.params.id}`;
+
+    // delete directory recursively
+    try {
+        fs.rmdirSync(dir, { recursive: true });
+
+        console.log(`${dir} is deleted!`);
+    } catch (err) {
+        console.error(`Error while deleting ${dir}.`);
+    }
+
     const sql = `DELETE FROM Users WHERE id='${req.params.id}';`
     db.query(sql, function (err, result, fields) {
         if (err) throw err;

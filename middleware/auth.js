@@ -1,5 +1,4 @@
 const jwt = require('jsonwebtoken');
-const db = require('../config/dabatase');
 
 // Contrôle la validité du token d'authentification de l'utilisateur
 module.exports = (req, res, next) => {

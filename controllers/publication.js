@@ -1,5 +1,5 @@
 const db = require('../config/dabatase');
-const fs = require('fs')
+const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const textAreaValidator = require('../middleware/input-textarea-validator');
 
@@ -18,7 +18,7 @@ exports.createPublication = (req, res, next) => {
             res.status(201).json({ message: 'Message publié !' });
         });
     } else {
-        const imageUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+        const imageUrl = `${req.protocol}://${req.get('host')}/images/users/id-${req.body.userId}/publications/${req.file.filename}`
     
         const sql0 = `INSERT INTO Publications VALUES (NULL,${req.body.userId},'${req.body.message}','${imageUrl}', NOW());`
         
@@ -68,10 +68,10 @@ exports.deletePublication = (req, res, next) => {
 
         } else {
             console.log('Suppression autorisée')
-            if(result[0].image_publiation){
-                const filename = result[0].image_publication.split(`/images/`)[1];
-                // Suppression de l'URL de l'image dans la database
-                fs.unlink(`images/${filename}`, (err) => {
+            if(result[0].image_publication){
+                const filename = result[0].image_publication.split(`/publications/`)[1];
+
+                fs.unlink(`images/users/id-${userId}/publications/${filename}`, (err) => {
                     if(err) console.log(err);
                     else{
                         db.query(`DELETE FROM Publications WHERE id=${req.params.id};` , function (err, result, fields) {
