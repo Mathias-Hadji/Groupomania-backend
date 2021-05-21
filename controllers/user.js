@@ -9,20 +9,25 @@ const emailValidator = require('../middleware/email-validator');
 const passwordValidator = require('../middleware/password-validator');
 
 exports.registration = (req, res, next) => {
+
+    if(req.body.firstName.length < 1 && req.body.lastName.length < 1 && req.body.email.length < 1 && req.body.password.length < 1){
+        return res.status(401).json({notValid : 'Champ vide.'})
+    }
+
     if(firstNameValidator.validate(req.body.firstName) == false){
-        return res.status(401).json({error: 'Invalid first name'})
+        return res.status(401).json({notValid: 'Prénom non valide.'})
     }
 
     if(lastNameValidator.validate(req.body.lastName) == false){
-        return res.status(401).json({error: 'Invalid last name'})
+        return res.status(401).json({notValid: 'Nom non valide.'})
     }    
 
     if(emailValidator.validate(req.body.email) == false){
-        return res.status(401).json({error: 'Invalid email'})
+        return res.status(401).json({notValid: 'Email non valide.'})
     }      
 
     if(passwordValidator.validate(req.body.password) == false){
-        return res.status(401).json({error: 'Password must have minimum length 8, 1 uppercase letter, 1 lowercase letter, 1 digit, 1 special char.'})
+        return res.status(401).json({notValid: 'Le mot de passe doit avoir une longueur minimale de 8 caractères, 1 lettre majuscule, 1 lettre minuscule, 1 chiffre, 1 caractère spécial.'})
     }
 
     const sql = `SELECT * FROM Users WHERE email_user = '${req.body.email}';`
@@ -31,7 +36,7 @@ exports.registration = (req, res, next) => {
 
         const user = result[0]
         if(user){
-            return res.status(401).json({ error: "L'email est déjà utilisé" })
+            return res.status(401).json({ notValid: "L'email est déjà utilisé" })
         }
         bcrypt.hash(req.body.password, 10)
         .then(hash => {
@@ -83,7 +88,7 @@ exports.registration = (req, res, next) => {
                     }) 
                 }
               })         
-              res.status(201).json({ message: 'Compte créé !' });
+              res.status(201).json({ message: 'Compte créé avec succès !' });
             }); 
         })
         .catch(error => res.status(500).json({ error }));        
@@ -94,26 +99,23 @@ exports.registration = (req, res, next) => {
 
 exports.login = (req, res, next) => {    
 
-    if(emailValidator.validate(req.body.email) == false){
-        return res.status(401).json({error: 'Invalid email'})
-    }      
 
-    if(passwordValidator.validate(req.body.password) == false){
-        return res.status(401).json({error: 'Password must have minimum length 8, 1 uppercase letter, 1 lowercase letter, 1 digit, 1 special char.'})
-    }    
-    
+    if(req.body.email.length == 0 || req.body.password.length == 0){
+        return res.status(401).json({notValid : 'Champ vide.'})
+    }   
+       
     const sql = `SELECT * FROM Users WHERE email_user='${req.body.email}';`
     db.query(sql, function (err, result, fields) {
         if (err) throw err;
 
         const user = result[0]
         if(!user){
-            return res.status(401).json({ error: "Email ou mot de passe non valide" })
+            return res.status(401).json({ notValid: "Email ou mot de passe incorrect." })
         }
         bcrypt.compare(req.body.password, user.password_user)
         .then(valid => {
             if(!valid){
-                return res.status(401).json({ error: 'Mot de passe incorrect' })
+                return res.status(401).json({ notValid: 'Mot de passe incorrect.' })
             }
             res.status(200).json({
                 userId: user.id,
@@ -122,7 +124,7 @@ exports.login = (req, res, next) => {
                     process.env.USER_TOKEN,
                     { expiresIn: '24h' }
                 ),
-                message:("Authentification réussie !")
+                message:("Connexion réussie !")
             });
             
         })

@@ -4,9 +4,9 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const userCtrl = require('../controllers/user');
 const multerProfilePic = require('../middleware/multer-config-profile-pic');
-userDescriptionCtrl = require('../controllers/user-description');
-userProfilePicCtrl = require('../controllers/user-profile-pic');
-userPasswordCtrl = require('../controllers/user-password');
+const userDescriptionCtrl = require('../controllers/user-description');
+const userProfilePicCtrl = require('../controllers/user-profile-pic');
+const userPasswordCtrl = require('../controllers/user-password');
 
 // USER ROUTES
 router.get('/:id', auth, userCtrl.getOneUser);
