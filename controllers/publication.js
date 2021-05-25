@@ -3,6 +3,55 @@ const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const textAreaValidator = require('../middleware/input-textarea-validator');
 
+
+exports.getOnePublication = (req, res, next) => {
+    const sql = `
+    SELECT
+    P.id,
+    P.user_id_publication,
+    P.image_publication,
+    P.message_publication,
+    DATE_FORMAT(P.date_publication, '%d %b. %Y - %H:%i') AS date_publication_fr,
+    U.first_name_user,
+    U.last_name_user,
+    U.profile_pic_user,
+    (select count(LP.id) from LikesPublications as LP where LP.publication_id = P.id) as likes
+    FROM Users AS U, Publications AS P
+    WHERE P.user_id_publication = U.id
+    AND P.id = ${req.params.id};
+    `
+
+    db.query(sql, function (err, result, fields) {
+        if (err) throw err;
+        res.status(200).json(result)
+    });
+
+};
+
+exports.getAllPublications = (req, res, next) => {
+    const sql = `
+    SELECT
+    P.id,
+    P.image_publication,
+    P.message_publication,
+    P.date_publication,
+    DATE_FORMAT(P.date_publication, '%d %b. %Y - %H:%i') AS date_publication_fr,
+    U.first_name_user,
+    U.last_name_user,
+    U.profile_pic_user,
+    (select count(LP.id) from LikesPublications as LP where LP.publication_id = P.id) as likes
+    FROM Users AS U, Publications AS P
+    WHERE P.user_id_publication = U.id
+    ;
+    `
+    
+    db.query(sql, function (err, result, fields) {
+        if (err) throw err;
+        res.status(200).json(result) 
+    });
+};
+
+
 exports.createPublication = (req, res, next) => {
 
     if(req.body.message.length == 0 && !req.file){
@@ -37,82 +86,6 @@ exports.createPublication = (req, res, next) => {
 
 
 
-exports.getAllPublications = (req, res, next) => {
-    const sql = `
-    SELECT
-    P.id,
-    P.image_publication,
-    P.message_publication,
-    DATE_FORMAT(P.date_publication, '%d %b. %Y - %H:%i') AS date_publication_fr,
-    U.first_name_user,
-    U.last_name_user,
-    U.profile_pic_user,
-    (select count(LP.id) from LikesPublications as LP where LP.publication_id = P.id) as likes
-    FROM Users AS U, Publications AS P
-    WHERE P.user_id_publication = U.id;
-    `
-    
-    db.query(sql, function (err, result, fields) {
-        if (err) throw err;
-        res.status(200).json(result) 
-    });
-
-
-
-};
-
-
-exports.getOnePublication = (req, res, next) => {
-    const sql = `
-    SELECT
-    P.id,
-    P.image_publication,
-    P.message_publication,
-    DATE_FORMAT(P.date_publication, '%d %b. %Y - %H:%i') AS date_publication_fr,
-    U.first_name_user,
-    U.last_name_user,
-    U.profile_pic_user,
-    (select count(LP.id) from LikesPublications as LP where LP.publication_id = P.id) as likes
-    FROM Users AS U, Publications AS P
-    WHERE P.user_id_publication = U.id
-    AND P.id = ${req.params.id};
-    `
-
-    db.query(sql, function (err, result, fields) {
-        if (err) throw err;
-
-        const sql = `
-        SELECT
-        C.*,
-        U.first_name_user,
-        U.last_name_user, 
-        U.profile_pic_user,
-        DATE_FORMAT(C.date_comment, '%d %b. %Y - %H:%i') AS date_comment_fr
-        FROM Comments as C, Users as U
-        WHERE C.publication_id = ${req.params.id}
-        AND C.user_id = U.id;
-        `
-        db.query(sql, function (err, result2, fields) {
-            if (err) throw err;
-
-
-            const sql = `
-            SELECT * FROM LikesPublications WHERE publication_id = ${req.params.id};
-            `
-
-            db.query(sql, function (err, result3, fields) {
-                if (err) throw err;
-
-                res.status(200).json({ publication: result, commentaires: result2, likes: result3 })
-            });
-        });
-    });
-
-};
-
-
-
-
 exports.deletePublication = (req, res, next) => {
     const token = req.headers.authorization.split(' ')[1];
     const decodedToken = jwt.verify(token, process.env.USER_TOKEN);
@@ -129,7 +102,7 @@ exports.deletePublication = (req, res, next) => {
             res.status(401).json({ message: 'Suppression non autorisée' })
 
         } else {
-            console.log('Suppression autorisée')
+            console.log('Publication supprimée')
             if(result[0].image_publication){
                 const filename = result[0].image_publication.split(`/publications/`)[1];
 
@@ -155,70 +128,3 @@ exports.deletePublication = (req, res, next) => {
     
 };
 
-
-
-
-
-// LIKES
-
-
-exports.getLikesOfPublication = (req, res, next) => {
-
-    const sql = `
-    SELECT * FROM LikesPublications WHERE publication_id = ${req.params.publicationId};
-    `
-    db.query(sql, function (err, result, fields) {
-        if (err) throw err;
-        res.status(200).json(result)
-    });
-};
-
-
-exports.getPublicationsLikedByOneUser = (req, res, next) => {
-
-    const token = req.headers.authorization.split(' ')[1];
-    const decodedToken = jwt.verify(token, process.env.USER_TOKEN);
-    const userId = decodedToken.userId;
-
-    const sql = `
-        SELECT publication_id FROM LikesPublications WHERE user_id = ${userId};
-    `
-    db.query(sql, function (err, result, fields) {
-        if (err) throw err;
-        res.status(200).json(result)
-    });
-}
-
-
-
-exports.likePublication = (req, res, next) => {
-    const token = req.headers.authorization.split(' ')[1];
-    const decodedToken = jwt.verify(token, process.env.USER_TOKEN);
-    const userId = decodedToken.userId;
-
-    const sql = `
-    SELECT * FROM LikesPublications WHERE publication_id = ${req.params.publicationId} AND user_id = ${userId};
-    `
-    db.query(sql, function (err, result, fields) {
-        if (err) throw err;
-
-        if(req.body.like == 1){
-            const sql = `
-            INSERT INTO LikesPublications VALUES (NULL, ${userId}, ${req.params.publicationId});
-            `
-            db.query(sql, function (err, result, fields) {
-                if (err) throw err;
-                res.status(200).json({message: 'like ajouté'})
-            });
-
-        } else {
-            const sql = `
-            DELETE FROM LikesPublications WHERE publication_id = ${req.params.publicationId} AND user_id = ${userId};
-            `
-            db.query(sql, function (err, result, fields) {
-                if (err) throw err;
-                res.status(200).json({message: 'like retiré'})
-            });
-        }
-    });
-};

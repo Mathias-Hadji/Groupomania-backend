@@ -10,6 +10,7 @@ const cors = require('cors')
 const userRoutes = require('./routes/user');
 const publicationRoutes = require('./routes/publication');
 const commentPublicationRoutes = require('./routes/comment-publication');
+const likePublicationRoutes = require('./routes/like-publication');
 
 const db = require('./config/dabatase');
 
@@ -62,6 +63,7 @@ app.use(xssClean());
 app.use('/api/user', userRoutes);
 app.use('/api/publication', publicationRoutes);
 app.use('/api/comment-publication', commentPublicationRoutes);
+app.use('/api/like-publication', likePublicationRoutes);
 
 // Server
 app.listen(process.env.PORT, () => {

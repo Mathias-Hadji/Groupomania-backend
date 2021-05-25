@@ -50,7 +50,8 @@ exports.getAllCommentsOfOnePublication = (req, res, next) => {
     DATE_FORMAT(C.date_comment, '%d %b. %Y - %H:%i') AS date_comment_fr
     FROM Comments as C, Users as U
     WHERE C.publication_id = ${req.params.publicationId}
-    AND C.user_id = U.id;
+    AND C.user_id = U.id
+    ORDER BY date_comment DESC;
     `
 
     db.query(sql, function (err, result, fields) {
@@ -61,13 +62,29 @@ exports.getAllCommentsOfOnePublication = (req, res, next) => {
 
 
 exports.deleteOneComment = (req, res, next) => {
+    const token = req.headers.authorization.split(' ')[1];
+    const decodedToken = jwt.verify(token, process.env.USER_TOKEN);
+    const userId = decodedToken.userId;
 
-    const sql = `
-    DELETE FROM Comments WHERE id=${req.params.id}
-    `
-
+    const sql = `SELECT * FROM Comments WHERE id=${req.params.id};`
     db.query(sql, function (err, result, fields) {
         if (err) throw err;
-        res.status(200).json({message: 'Commentaire supprimé !'})
+
+        const userIdComment = result[0].user_id
+
+        if(userId != userIdComment){
+            console.log('Suppression non autorisée')
+            res.status(401).json({ message: 'Suppression non autorisée' })
+        } else {
+            console.log('Commentaire supprimé')
+            const sql = `
+            DELETE FROM Comments WHERE id=${req.params.id}
+            `
+        
+            db.query(sql, function (err, result, fields) {
+                if (err) throw err;
+                res.status(200).json({message: 'Commentaire supprimé !'})
+            });
+        }
     });
 }

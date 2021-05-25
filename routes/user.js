@@ -21,4 +21,5 @@ router.put('/profile-pic/:id', auth, multerProfilePic, userProfilePicCtrl);
 
 router.delete('/:id', auth, userCtrl.deleteUserAccount);
 
+
 module.exports = router;

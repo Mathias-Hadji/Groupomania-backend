@@ -13,9 +13,5 @@ router.post('/', auth, multerPublications, publicationCtrl.createPublication);
 // router.put à créer
 router.delete('/:id', auth, publicationCtrl.deletePublication);
 
-
-router.get('/likes/user/:id', auth, publicationCtrl.getPublicationsLikedByOneUser);
-router.get('/likes/:publicationId', auth, publicationCtrl.getLikesOfPublication);
-router.post('/likes/:publicationId', auth, publicationCtrl.likePublication);
 module.exports = router;
 
