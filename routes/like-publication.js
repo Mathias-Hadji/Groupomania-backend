@@ -4,11 +4,9 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const likePublicationCtrl = require('../controllers/like-publication');
 
-router.get('/:publicationId', auth, likePublicationCtrl.getLikesOfOnePublication);
-router.post('/:publicationId', auth, likePublicationCtrl.likePublication);
+router.get('/publication/:id', auth, likePublicationCtrl.getAllLikesOfOnePublication);
+router.get('/user/:id', auth, likePublicationCtrl.getAllLikesOfOneUser);
 
-
-router.get('/user/:userId', auth, likePublicationCtrl.getPublicationsLikedByOneUser);
+router.post('/publication/:id', auth, likePublicationCtrl.addOneLikeToggle);
 
 module.exports = router;
-

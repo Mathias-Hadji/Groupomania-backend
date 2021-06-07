@@ -1,130 +1,58 @@
-const db = require('../config/dabatase');
-const fs = require('fs');
+const { sequelize, Publication, User } = require('../models');
 const jwt = require('jsonwebtoken');
-const textAreaValidator = require('../middleware/input-textarea-validator');
 
-
-exports.getOnePublication = (req, res, next) => {
-    const sql = `
-    SELECT
-    P.id,
-    P.user_id_publication,
-    P.image_publication,
-    P.message_publication,
-    DATE_FORMAT(P.date_publication, '%d %b. %Y - %H:%i') AS date_publication_fr,
-    U.first_name_user,
-    U.last_name_user,
-    U.profile_pic_user,
-    (select count(LP.id) from LikesPublications as LP where LP.publication_id = P.id) as likes
-    FROM Users AS U, Publications AS P
-    WHERE P.user_id_publication = U.id
-    AND P.id = ${req.params.id};
-    `
-
-    db.query(sql, function (err, result, fields) {
-        if (err) throw err;
-        res.status(200).json(result)
-    });
-
-};
-
-exports.getAllPublications = (req, res, next) => {
-    const sql = `
-    SELECT
-    P.id,
-    P.image_publication,
-    P.message_publication,
-    P.date_publication,
-    DATE_FORMAT(P.date_publication, '%d %b. %Y - %H:%i') AS date_publication_fr,
-    U.first_name_user,
-    U.last_name_user,
-    U.profile_pic_user,
-    (select count(LP.id) from LikesPublications as LP where LP.publication_id = P.id) as likes
-    FROM Users AS U, Publications AS P
-    WHERE P.user_id_publication = U.id
-    ;
-    `
-    
-    db.query(sql, function (err, result, fields) {
-        if (err) throw err;
-        res.status(200).json(result) 
-    });
-};
 
 
 exports.createPublication = (req, res, next) => {
 
-    if(req.body.message.length == 0 && !req.file){
-        return res.status(401).json({notValid : 'Champ vide.'})
-    }
-
-    if(textAreaValidator.validate(req.body.message) == false){
-        return res.status(401).json({error: 'Invalid text-area'})
-    }
-
-    if(!req.file){
-        const sql = `INSERT INTO Publications VALUES (NULL,${req.body.userId},'${req.body.message}', '', NOW());`
-        
-        db.query(sql, function (err, result) {
-            if (err) throw err;
-            console.log("1 record inserted, ID: " + result.insertId);
-            res.status(201).json({ message: 'Message publié !' });
-        });
-    } else {
-        const imageUrl = `${req.protocol}://${req.get('host')}/images/users/id-${req.body.userId}/publications/${req.file.filename}`
-    
-        const sql0 = `INSERT INTO Publications VALUES (NULL,${req.body.userId},'${req.body.message}','${imageUrl}', NOW());`
-        
-        db.query(sql0, function (err, result) {
-            if (err) throw err;
-            console.log("1 record inserted, ID: " + result.insertId);
-            res.status(201).json({ message: 'Message publié !' });
-        });
-    }
-
-};
-
-
-
-exports.deletePublication = (req, res, next) => {
     const token = req.headers.authorization.split(' ')[1];
     const decodedToken = jwt.verify(token, process.env.USER_TOKEN);
     const userId = decodedToken.userId;
 
-    const sql = `SELECT * FROM Publications WHERE id=${req.params.id};`
-    db.query(sql, function (err, result, fields) {
-        if (err) throw err;
+    if(!req.file){
 
-        const userIdPublication = result[0].user_id_publication
+        Publication.create({ user_id_publication: userId, message_publication: req.body.message })
+        .then(() => res.status(201).json({ message: 'Publication créée avec succès !'}))
+        .catch(err => res.status(401).json({ err }));
 
-        if(userId != userIdPublication){
-            console.log('Suppression non autorisée')
-            res.status(401).json({ message: 'Suppression non autorisée' })
+    } else {
 
-        } else {
-            console.log('Publication supprimée')
-            if(result[0].image_publication){
-                const filename = result[0].image_publication.split(`/publications/`)[1];
+        const imageUrl = `${req.protocol}://${req.get('host')}/images/users/id-${userId}/publications/${req.file.filename}`
 
-                fs.unlink(`images/users/id-${userId}/publications/${filename}`, (err) => {
-                    if(err) console.log(err);
-                    else{
-                        db.query(`DELETE FROM Publications WHERE id=${req.params.id};` , function (err, result, fields) {
-                            if (err) throw err;
-                    
-                            res.status(200).json({message: 'Publication supprimée !'});
-                        }); 
-                    }
-                })
-            } else {
-                db.query(`DELETE FROM Publications WHERE id=${req.params.id};` , function (err, result, fields) {
-                    if (err) throw err;
-            
-                    res.status(200).json({message: 'Publication supprimée !'});
-                });                 
-            }
-        }
-    });
-    
-};
+        Publication.create({ user_id_publication: userId, message_publication: req.body.message, image_publication: imageUrl })
+        .then(() => res.status(201).json({ message: 'Publication créée avec succès !'}))
+        .catch(err => res.status(401).json({ err }));  
+    }
+}
 
+
+exports.getOnePublication = (req, res, next) => {
+
+    Publication.findOne({ where: { id: req.params.id },
+        include: {
+            model: User,
+            attributes: ['first_name_user', 'last_name_user', 'profile_pic_user', 'createdAt', 'updatedAt']
+        } 
+    })
+    .then(publication => res.status(200).json(publication))
+    .catch(err => res.status(401).json({ err }))
+}
+
+
+exports.getAllPublications = (req, res, next) => {
+    Publication.findAll(
+        { include: {
+            model: User,
+            attributes: ['first_name_user', 'last_name_user', 'profile_pic_user', 'createdAt', 'updatedAt']
+        } 
+    })
+    .then(publications => res.status(200).json(publications))
+    .catch(err => res.status(401).json({ err }))
+}
+
+
+exports.deleteOnePublication = (req, res, next) => {
+    Publication.destroy({ where: { id: req.params.id } })
+        .then(res.status(201).json({ message: 'Publication supprimée avec succès !' }))
+        .catch(err => res.status(401).json({ err }))
+}

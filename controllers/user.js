@@ -1,178 +1,162 @@
-const db = require('../config/dabatase');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 
-const firstNameValidator = require('../middleware/first-name-validator');
-const lastNameValidator = require('../middleware/last-name-validator');
-const emailValidator = require('../middleware/email-validator');
-const passwordValidator = require('../middleware/password-validator');
+const { sequelize, User } = require('../models');
+
+const createUserFolders = require('../middleware/createUserFolders');
+
+const regexpPassword = new RegExp('^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$', 'i');
+
 
 exports.registration = (req, res, next) => {
 
-    if(req.body.firstName.length < 1 && req.body.lastName.length < 1 && req.body.email.length < 1 && req.body.password.length < 1){
-        return res.status(401).json({notValid : 'Champ vide.'})
+    const firstName = req.body.firstName;
+    const lastName = req.body.lastName;
+    const email = req.body.email;
+    const password = req.body.password;
+    const profilePicByDefault = `${req.protocol}://${req.get('host')}/images/profile-pic-user-default/profile-user.svg`;
+
+    if(!regexpPassword.test(password)){
+        return res.status(401).json({ notValid: 'Le mot de passe doit avoir une longueur minimale de 8 caractères, 1 lettre majuscule, 1 lettre minuscule, 1 chiffre, 1 caractère spécial.' })
     }
 
-    if(firstNameValidator.validate(req.body.firstName) == false){
-        return res.status(401).json({notValid: 'Prénom non valide.'})
-    }
-
-    if(lastNameValidator.validate(req.body.lastName) == false){
-        return res.status(401).json({notValid: 'Nom non valide.'})
-    }    
-
-    if(emailValidator.validate(req.body.email) == false){
-        return res.status(401).json({notValid: 'Email non valide.'})
-    }      
-
-    if(passwordValidator.validate(req.body.password) == false){
-        return res.status(401).json({notValid: 'Le mot de passe doit avoir une longueur minimale de 8 caractères, 1 lettre majuscule, 1 lettre minuscule, 1 chiffre, 1 caractère spécial.'})
-    }
-
-    const sql = `SELECT * FROM Users WHERE email_user = '${req.body.email}';`
-    db.query(sql, function (err, result, fields) {
-        if (err) throw err;
-
-        const user = result[0]
-        if(user){
-            return res.status(401).json({ notValid: "L'email est déjà utilisé" })
+    bcrypt.hash(password, 10)
+    .then(hash => {
+        const user = {
+            first_name_user: firstName,
+            last_name_user: lastName,
+            email_user: email,
+            password_user: hash,
+            profile_pic_user: profilePicByDefault,
         }
-        bcrypt.hash(req.body.password, 10)
-        .then(hash => {
-            const user = {
-                firstName: req.body.firstName,
-                lastName: req.body.lastName,
-                email: req.body.email,
-                password: hash
-            };
+        User.create(user)
+            .then(newUser => {
+                createUserFolders(newUser)
+            })
+            .then(res.status(201).json({ message: 'Compte créé avec succès !'}))
+            .catch(err => res.status(400).json({ err }));
 
-            const profilePicDefaultUrl = `${req.protocol}://${req.get('host')}/images/profile-pic-user-default/profile-user.svg`
+    })
+    .catch(err => res.status(500).json({ err }));
 
-            const sql = `INSERT INTO Users VALUES (NULL, '${user.firstName}', '${user.lastName}', '${user.email}', '${user.password}', '${profilePicDefaultUrl}', DEFAULT, DEFAULT);`
-            db.query(sql, function (err, result) {
-              if (err) throw err;
-              console.log("1 record inserted, ID: " + result.insertId);
-
-              // Create directory images/users/user-ID
-              fs.mkdir(`./images/users/id-${result.insertId}`, function(err) {
-                if (err) {
-                    console.log(err)
-                } else {
-                    console.log("New directory successfully created.")
-
-                    // Create directory images/users/user-ID/profile
-                    fs.mkdir(`./images/users/id-${result.insertId}/profile`, function(err) {
-                        if (err) {
-                            console.log(err)
-                        } else {
-                            console.log("New directory successfully created.")
-
-                            // Create directory images/users/user-ID/profile/profile-pic
-                            fs.mkdir(`./images/users/id-${result.insertId}/profile/profile-pic`, function(err) {
-                                if (err) {
-                                    console.log(err)
-                                } else {
-                                    console.log("New directory successfully created.")
-                                }
-                            })
-                        }
-                    })
-                    // Create directory images/users/user-ID/publications
-                    fs.mkdir(`./images/users/id-${result.insertId}/publications`, function(err) {
-                        if (err) {
-                            console.log(err)
-                        } else {
-                            console.log("New directory successfully created.")
-                        }
-                    }) 
-                }
-              })         
-              res.status(201).json({ message: 'Compte créé avec succès !' });
-            }); 
-        })
-        .catch(error => res.status(500).json({ error }));        
-    });
 };
 
 
+exports.login = (req, res, next) => {
+    const email = req.body.email;
+    const password = req.body.password;
 
-exports.login = (req, res, next) => {    
-
-
-    if(req.body.email.length == 0 || req.body.password.length == 0){
-        return res.status(401).json({notValid : 'Champ vide.'})
-    }   
-       
-    const sql = `SELECT * FROM Users WHERE email_user='${req.body.email}';`
-    db.query(sql, function (err, result, fields) {
-        if (err) throw err;
-
-        const user = result[0]
-        if(!user){
-            return res.status(401).json({ notValid: "Email ou mot de passe incorrect." })
-        }
-        bcrypt.compare(req.body.password, user.password_user)
-        .then(valid => {
-            if(!valid){
-                return res.status(401).json({ notValid: 'Mot de passe incorrect.' })
+    User.findOne({ where: { email_user: email } })
+        .then(user => {
+            if(!user){
+                return res.status(401).json({ notValid: 'Email ou mot de passe incorrect.'})
             }
-            res.status(200).json({
-                userId: user.id,
-                token: jwt.sign(
-                    { userId: user.id },
-                    process.env.USER_TOKEN,
-                    { expiresIn: '24h' }
-                ),
-                message:("Connexion réussie !")
-            });
-            
+            bcrypt.compare(password, user.password_user)
+                .then(valid => {
+                    if(!valid){
+                        return res.status(401).json({ notValid: 'Mot de passe incorrect.'})
+                    } else {
+                        res.status(200).json({
+                            userId: user.id,
+                            token: jwt.sign(
+                                { userId: user.id },
+                                process.env.USER_TOKEN,
+                                { expiresIn: '24h' }
+                            ), message:('Connexion réussie !')
+                        });
+                    }
+                })
+                .catch(err => res.status(401).json({ err }))
         })
-        .catch(error => res.status(500).json({ error })); 
-    });
+        .catch(err => res.status(500).json({ err }))
 }
 
 
 exports.getOneUser = (req, res, next) => {
 
-    const sql = `SELECT * FROM Users WHERE id='${req.params.id}';`
-    db.query(sql, function (err, result, fields) {
-        if (err) throw err;
-
-        res.status(200).json({ result });
-    });
+    User.findOne({ where: { id: req.params.id }, 
+        attributes: ['first_name_user', 'last_name_user', 'email_user', 'profile_pic_user', 'bio_user', 'createdAt', 'updatedAt']})
+        .then(user => res.status(200).json(user))
+        .catch(err => res.status(401).json({ err }))
 }
+
 
 exports.getAllUsers = (req, res, next) => {
-    const sql = `SELECT * FROM Users;`
-    db.query(sql, function (err, result, fields) {
-        if(err) throw err;
-
-        res.status(200).json({ result })
-    })
+    User.findAll({ attributes: ['first_name_user', 'last_name_user', 'email_user', 'profile_pic_user', 'bio_user', 'createdAt', 'updatedAt'] })
+        .then(users => res.status(200).json(users))
+        .catch(err => res.status(401).json({ err }))
 }
 
 
+exports.modifyUser = (req, res, next) => {
+
+    const bio = req.body.bio;
+    const currentPassword = req.body.currentPassword;
+    const newPassword = req.body.newPassword;
+    const file = req.file
 
 
-exports.deleteUserAccount = (req, res, next) => {
+    if(bio){
 
-    // directory path
-    const dir = `images/users/id-${req.params.id}`;
+        User.update({ bio_user: bio }, { where: {id: req.params.id }})
+            .then(() => res.status(201).json({ message: 'Bio modifiée avec succès !'}))
+            .catch(err => res.status(401).json({ err }))
 
-    // delete directory recursively
-    try {
-        fs.rmdirSync(dir, { recursive: true });
+    } else if(currentPassword){
 
-        console.log(`${dir} is deleted!`);
-    } catch (err) {
-        console.error(`Error while deleting ${dir}.`);
+        User.findOne({ where: { id: req.params.id } })
+            .then(user => {
+                bcrypt.compare(currentPassword, user.password_user)
+                .then(valid => {
+                    if(!valid){
+                        return res.status(401).json({ notValid: 'Le mot de passe que vous avez saisi est incorrect.' })
+                    }
+
+                    if(!regexpPassword.test(newPassword)){
+                        return res.status(401).json({ notValid: 'Le mot de passe doit avoir une longueur minimale de 8 caractères, 1 lettre majuscule, 1 lettre minuscule, 1 chiffre, 1 caractère spécial.' })
+                    }
+
+                    bcrypt.hash(newPassword, 10)
+                        .then(hash => {
+                            User.update({ password_user: hash }, { where: { id: req.params.id }})
+                            .then(() => res.status(201).json({ message: 'Mot de passe modifié avec succès !'}))
+                            .catch(err => res.status(401).json({ err }))
+                        })
+                        .catch(err => res.status(401).json({ err }))
+                })
+                .catch(err => res.status(500).json({ err }))
+            })
+            .catch(err => res.status(500).json({ err }))
+
+    } else if(file){   
+
+        const imageUrl = `${req.protocol}://${req.get('host')}/images/users/id-${req.params.id}/profile/profile-pic/${req.file.filename}`
+
+        User.update({ profile_pic_user : imageUrl }, { where: {id: req.params.id }})
+            .then(() => res.status(201).json({ message: 'Image de profil modifiée avec succès !'}))
+            .catch(err => res.status(401).json({ err }))
+
+    } else {
+        return res.status(500).json({message: 'Requête non valide'})
     }
+}
 
-    const sql = `DELETE FROM Users WHERE id='${req.params.id}';`
-    db.query(sql, function (err, result, fields) {
-        if (err) throw err;
 
-        res.status(200).json({ message: 'Compte supprimé !' });
-    });
+exports.deleteOneUser = (req, res, next) => {
+
+    User.destroy({ where: { id: req.params.id } })
+        .then(() => {
+            const dir = `images/users/id-${req.params.id}`;
+
+            try {
+                fs.rmdirSync(dir, { recursive: true });
+
+                console.log(`${dir} a été supprimé !`);
+            } catch (err) {
+                console.error(`Erreur à la suppression de l'élément ${dir}.`);
+            }
+        })
+        .then(res.status(201).json({ message: 'Compte supprimé avec succès !' }))
+        .catch(err => res.status(401).json({ err }))
 }

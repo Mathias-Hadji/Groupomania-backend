@@ -2,3 +2,4 @@
 /node_modules
 bdd
 /config/.env
+/config/commands.txt
