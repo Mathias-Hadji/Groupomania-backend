@@ -24,15 +24,24 @@ exports.addOneLikeToggle = (req, res, next) => {
     const decodedToken = jwt.verify(token, process.env.USER_TOKEN);
     const userId = decodedToken.userId;
 
-    if(req.body.like == 1){
-        Like_publication.create({ user_id: userId, publication_id: req.params.id })
-        .then(() => res.status(201).json({ message: 'Like ajouté avec succès !' }))
-        .catch(err => res.status(401).json({ err }))
-    } else {
-        Like_publication.destroy({ where: {id: userId } })
-        .then(() => res.status(201).json({ message: 'Like retiré avec succès !' }))
-        .catch(err => res.status(401).json({ err }))
-    }
+    // Get All Likes of One User
+    Like_publication.findOne({ where: { user_id: userId, publication_id: req.params.id } })
+    .then(user => {
+
+        if(!user){
+            Like_publication.create({ user_id: userId, publication_id: req.params.id })
+            .then(() => res.status(201).json({ message: 'Like ajouté avec succès !' }))
+            .catch(err => res.status(401).json({ err }))
+
+        } else {
+            Like_publication.destroy({ where: { user_id: userId, publication_id: req.params.id } })
+            .then(() => res.status(201).json({ message: 'Like retiré avec succès !' }))
+            .catch(err => res.status(401).json({ err }))
+        }
+
+    })
+    .catch((err) => res.status(500).json({ err }));
+
 }
 
 

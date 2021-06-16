@@ -15,6 +15,8 @@ module.exports = {
           model: 'Users', // name of Target model
           key: 'id', // key in Target model that we're referencing
         },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
       },
       publication_id_comment: {
         allowNull: false,
@@ -23,6 +25,8 @@ module.exports = {
           model: 'Publications', // name of Target model
           key: 'id', // key in Target model that we're referencing
         },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
       },
       comment: {
         allowNull: false,

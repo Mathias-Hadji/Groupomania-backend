@@ -37,7 +37,22 @@ exports.getOneComment = (req, res, next) => {
 
 
 exports.deleteOneComment = (req, res, next) => {
-    Comment.destroy({ where: { id: req.params.id } })
-    .then(() => res.status(201).json({ message: 'Commentaire supprimé avec succès !'}))
-    .catch(err => res.status(401).json({ err }));
+
+    const token = req.headers.authorization.split(' ')[1];
+    const decodedToken = jwt.verify(token, process.env.USER_TOKEN);
+    const userId = decodedToken.userId;
+
+    Comment.findOne({ where: { id: req.params.id, user_id_comment: userId } })
+    .then(comment => {
+
+        if(!comment){
+            res.status(401).json({ message: 'Suppression non autorisée.' })
+        } else {
+
+            Comment.destroy({ where: { id: req.params.id } })
+            .then(() => res.status(201).json({ message: 'Commentaire supprimé avec succès !'}))
+            .catch(err => res.status(401).json({ err }));
+        }
+    })
+    .catch(err => res.status(500).json({ err }))
 }

@@ -96,9 +96,6 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: false,
       comment: null,
       field: "bio_user",
-      validate: {
-        len: [1, 500],
-      }
     },
     is_admin: {
       type: DataTypes.INTEGER(1),

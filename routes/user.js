@@ -14,8 +14,10 @@ router.get('/', auth, userCtrl.getAllUsers);
 router.post('/registration', userCtrl.registration);
 router.post('/login', userCtrl.login);
 
-router.put('/:id', auth, multerProfilePic, userCtrl.modifyUser);
+router.put('/profile-pic', auth, multerProfilePic, userCtrl.modifyUserProfilePic);
+router.put('/bio', auth, userCtrl.modifyUserBio);
+router.put('/password', auth, userCtrl.modifyUserPassword);
 
-router.delete('/:id', auth, userCtrl.deleteOneUser);
+router.delete('/delete-account', auth, userCtrl.deleteOneUserAccount);
 
 module.exports = router;

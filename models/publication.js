@@ -1,7 +1,8 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+
+const moment = require('moment');
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class Publication extends Model {
     /**
@@ -13,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       models.Publication.belongsTo(models.User, {
         foreignKey : 'user_id_publication',
-        allowNull: false
+        allowNull: false,
       });
       models.Publication.hasMany(models.Comment, {
         foreignKey : 'publication_id_comment',
@@ -79,7 +80,11 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: false,
       autoIncrement: false,
       comment: null,
-      field: "createdAt"
+      field: "createdAt",
+  
+      get() {
+        return moment(this.getDataValue('createdAt')).locale('fr').fromNow()
+      }
     },
     updatedAt: {
       type: DataTypes.DATE,
@@ -88,7 +93,11 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: false,
       autoIncrement: false,
       comment: null,
-      field: "updatedAt"
+      field: "updatedAt",
+
+      get() {
+        return moment(this.getDataValue('updatedAt')).locale('fr').fromNow()
+      }
     }
   }, {
     sequelize,

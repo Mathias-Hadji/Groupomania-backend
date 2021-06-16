@@ -1,7 +1,8 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+
+const moment = require('moment');
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class Comment extends Model {
     /**
@@ -63,7 +64,10 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: false,
       autoIncrement: false,
       comment: null,
-      field: "comment"
+      field: "comment",
+      validate: {
+        len: [1, 500]
+      }
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -72,7 +76,11 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: false,
       autoIncrement: false,
       comment: null,
-      field: "createdAt"
+      field: "createdAt",
+
+      get() {
+        return moment(this.getDataValue('createdAt')).locale('fr').fromNow()
+      }
     },
     updatedAt: {
       type: DataTypes.DATE,
@@ -81,7 +89,11 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: false,
       autoIncrement: false,
       comment: null,
-      field: "updatedAt"
+      field: "updatedAt",
+
+      get() {
+        return moment(this.getDataValue('updatedAt')).locale('fr').fromNow()
+      }
     }
   }, {
     sequelize,
