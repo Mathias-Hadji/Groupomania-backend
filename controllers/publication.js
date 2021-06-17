@@ -1,7 +1,7 @@
 const { sequelize, Publication, User } = require('../models');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
-
+const { Op } = require("sequelize");
 
 exports.createPublication = (req, res, next) => {
 
@@ -59,12 +59,18 @@ exports.deleteOnePublication = (req, res, next) => {
     const token = req.headers.authorization.split(' ')[1];
     const decodedToken = jwt.verify(token, process.env.USER_TOKEN);
     const userId = decodedToken.userId;
+    const isAdmin = decodedToken.isAdmin;
 
-    Publication.findOne({ where: { id: req.params.id, user_id_publication: userId } })
+
+    Publication.findOne({ where: { id: req.params.id } })
     .then(publication => {
 
         if(!publication){
+            res.status(401).json({ message: 'Publication non trouvée.' })
+
+        } else if(isAdmin !== 1 && publication.user_id_publication !== userId) {
             res.status(401).json({ message: 'Suppression non autorisée.' })
+
         } else {
 
             // Delete publication contain file

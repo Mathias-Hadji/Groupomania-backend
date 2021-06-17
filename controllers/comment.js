@@ -41,12 +41,18 @@ exports.deleteOneComment = (req, res, next) => {
     const token = req.headers.authorization.split(' ')[1];
     const decodedToken = jwt.verify(token, process.env.USER_TOKEN);
     const userId = decodedToken.userId;
+    const isAdmin = decodedToken.isAdmin;
 
-    Comment.findOne({ where: { id: req.params.id, user_id_comment: userId } })
+    Comment.findOne({ where: { id: req.params.id } })
     .then(comment => {
+
 
         if(!comment){
             res.status(401).json({ message: 'Suppression non autorisée.' })
+        
+        } else if(isAdmin !== 1 && comment.user_id_comment !== userId ){
+            res.status(401).json({ message: 'Suppression non autorisée.' })
+
         } else {
 
             Comment.destroy({ where: { id: req.params.id } })

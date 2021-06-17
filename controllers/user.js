@@ -72,8 +72,9 @@ exports.login = (req, res, next) => {
                     } else {
                         res.status(200).json({
                             userId: user.id,
+                            isAdmin: user.is_admin,
                             token: jwt.sign(
-                                { userId: user.id },
+                                { userId: user.id, isAdmin: user.is_admin },
                                 process.env.USER_TOKEN,
                                 { expiresIn: '24h' }
                             ), message:('Connexion réussie !')
