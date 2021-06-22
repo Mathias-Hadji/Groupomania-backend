@@ -1,7 +1,6 @@
 const { sequelize, Publication, User } = require('../models');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
-const { Op } = require("sequelize");
 
 exports.createPublication = (req, res, next) => {
 

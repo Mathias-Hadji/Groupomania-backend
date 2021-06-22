@@ -17,6 +17,7 @@ exports.createOneComment = (req, res, next) => {
 exports.getAllCommentsOfOnePublication = (req, res, next) => {
 
     Comment.findAll({ where: { publication_id_comment: req.params.id },
+        order: [['updatedAt', 'DESC']],
         include: {
             model: User,
             attributes: ['first_name_user', 'last_name_user', 'profile_pic_user', 'createdAt', 'updatedAt']
