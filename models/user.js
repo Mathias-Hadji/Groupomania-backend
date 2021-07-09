@@ -18,6 +18,9 @@ module.exports = (sequelize, DataTypes) => {
       models.User.hasMany(models.Like_publication, {
         foreignKey: 'user_id' 
       });
+      models.User.hasOne(models.Session, {
+        foreignKey: 'user_id_session' 
+      });
     }
   };
   User.init({

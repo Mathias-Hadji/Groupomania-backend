@@ -1,23 +1,18 @@
 const { sequelize, Publication, User } = require('../models');
-const jwt = require('jsonwebtoken');
 const fs = require('fs');
 
 exports.createPublication = (req, res, next) => {
 
-    const token = req.headers.authorization.split(' ')[1];
-    const decodedToken = jwt.verify(token, process.env.USER_TOKEN);
-    const userId = decodedToken.userId;
-
     if(!req.file){
 
-        Publication.create({ user_id_publication: userId, message_publication: req.body.message })
+        Publication.create({ user_id_publication: req.body.userId, message_publication: req.body.message })
         .then(() => res.status(201).json({ message: 'Publication créée avec succès !'}))
         .catch(err => res.status(401).json({ err }));
 
     } else {
-        const imageUrl = `${req.protocol}://${req.get('host')}/images/users/id-${userId}/publications/${req.file.filename}`
+        const imageUrl = `${req.protocol}://${req.get('host')}/images/users/id-${req.body.userId}/publications/${req.file.filename}`
 
-        Publication.create({ user_id_publication: userId, message_publication: req.body.message || ' ', image_publication: imageUrl })
+        Publication.create({ user_id_publication: req.body.userId, message_publication: req.body.message || ' ', image_publication: imageUrl })
         .then(() => res.status(201).json({ message: 'Publication créée avec succès !'}))
         .catch(err => res.status(401).json({ err }));  
     }
@@ -55,28 +50,25 @@ exports.getAllPublications = (req, res, next) => {
 
 exports.deleteOnePublication = (req, res, next) => {
 
-    const token = req.headers.authorization.split(' ')[1];
-    const decodedToken = jwt.verify(token, process.env.USER_TOKEN);
-    const userId = decodedToken.userId;
-    const isAdmin = decodedToken.isAdmin;
-
-
     Publication.findOne({ where: { id: req.params.id } })
     .then(publication => {
 
         if(!publication){
-            res.status(401).json({ message: 'Publication non trouvée.' })
+            return res.status(401).json({ message: 'Publication non trouvée !' })
+        }
 
-        } else if(isAdmin !== 1 && publication.user_id_publication !== userId) {
-            res.status(401).json({ message: 'Suppression non autorisée.' })
+        User.findOne({ where: { id: req.body.userId } })
+        .then(user => {
 
-        } else {
+            if(user.id != publication.user_id_publication && user.is_admin != 1){
+                return res.status(401).json({ message: 'Action non autorisée !' })
+            }
 
             // Delete publication contain file
             if(publication.image_publication){
                 const filename = publication.image_publication.split('/publications/')[1];
 
-                fs.unlink(`images/users/id-${userId}/publications/${filename}`, () => {
+                fs.unlink(`images/users/id-${req.body.userId}/publications/${filename}`, () => {
                     Publication.destroy({ where: { id: req.params.id } })
                     .then(() => res.status(201).json({ message: 'Publication supprimée avec succès !' }))
                     .catch(err => res.status(500).json({ err }))
@@ -88,7 +80,8 @@ exports.deleteOnePublication = (req, res, next) => {
                 .then(() => res.status(201).json({ message: 'Publication supprimée avec succès !' }))
                 .catch(err => res.status(500).json({ err }))
             }
-        }
+        })
+        .catch(err => res.status(401).json({ err }))
     })
     .catch(err => res.status(500).json({ err }))
 }

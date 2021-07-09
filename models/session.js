@@ -1,25 +1,23 @@
 'use strict';
+
+const moment = require('moment');
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class Like_publication extends Model {
+  class Session extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      models.Like_publication.belongsTo(models.User, {
-        foreignKey : 'user_id',
-        allowNull: false
-      });
-      models.Like_publication.belongsTo(models.Publication, {
-        foreignKey : 'publication_id',
-        allowNull: false
-      });
+      models.Session.belongsTo(models.User, {
+        foreignKey: 'user_id_session',
+        allowNull: false,
+      })
     }
   };
-  Like_publication.init({
+  Session.init({
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -29,31 +27,28 @@ module.exports = (sequelize, DataTypes) => {
       comment: null,
       field: "id"
     },
-    user_id: {
+    user_id_session: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: null,
       primaryKey: false,
       autoIncrement: false,
       comment: null,
-      field: "user_id",
+      field: "user_id_session",
       references: {
         key: "id",
         model: "Users"
       }
     },
-    publication_id: {
-      type: DataTypes.INTEGER,
+    token_auth: {
+      type: DataTypes.STRING(255),
       allowNull: false,
       defaultValue: null,
       primaryKey: false,
       autoIncrement: false,
       comment: null,
-      field: "publication_id",
-      references: {
-        key: "id",
-        model: "Publications"
-      }
+      field: "token_auth",
+      unique: "token_auth"
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -75,7 +70,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   }, {
     sequelize,
-    modelName: 'Like_publication',
+    modelName: 'Session',
   });
-  return Like_publication;
+  return Session;
 };

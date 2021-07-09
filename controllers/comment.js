@@ -1,14 +1,9 @@
 const { sequelize, Comment, User } = require('../models');
-const jwt = require('jsonwebtoken');
 
 
 exports.createOneComment = (req, res, next) => {
 
-    const token = req.headers.authorization.split(' ')[1];
-    const decodedToken = jwt.verify(token, process.env.USER_TOKEN);
-    const userId = decodedToken.userId;
-
-    Comment.create({ user_id_comment: userId, publication_id_comment: req.params.id, comment: req.body.comment })
+    Comment.create({ user_id_comment: req.body.userId, publication_id_comment: req.params.id, comment: req.body.comment })
     .then(() => res.status(201).json({ message: 'Commentaire créé avec succès !'}))
     .catch(err => res.status(401).json({ err }));
 }
@@ -39,27 +34,27 @@ exports.getOneComment = (req, res, next) => {
 
 exports.deleteOneComment = (req, res, next) => {
 
-    const token = req.headers.authorization.split(' ')[1];
-    const decodedToken = jwt.verify(token, process.env.USER_TOKEN);
-    const userId = decodedToken.userId;
-    const isAdmin = decodedToken.isAdmin;
-
     Comment.findOne({ where: { id: req.params.id } })
     .then(comment => {
-
-
         if(!comment){
-            res.status(401).json({ message: 'Suppression non autorisée.' })
-        
-        } else if(isAdmin !== 1 && comment.user_id_comment !== userId ){
-            res.status(401).json({ message: 'Suppression non autorisée.' })
+            return res.status(401).json({ message: 'Commentaire non trouvé !' })
+        }
 
-        } else {
-
+        User.findOne({ where: { id: req.body.userId } })
+        .then(user => {
+    
+            if(user.id != comment.user_id_comment && user.is_admin != 1){
+                return res.status(401).json({ message: 'Action non autorisée !' }) 
+            }
+    
             Comment.destroy({ where: { id: req.params.id } })
             .then(() => res.status(201).json({ message: 'Commentaire supprimé avec succès !'}))
             .catch(err => res.status(401).json({ err }));
-        }
+
+        })
+        .catch(err => res.status(500).json({ err }))
     })
     .catch(err => res.status(500).json({ err }))
+
+
 }

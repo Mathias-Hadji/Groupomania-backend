@@ -1,5 +1,4 @@
 const multer = require('multer');
-const jwt = require('jsonwebtoken');
 
 const MIME_TYPES = {
     'image/jpg': 'jpg',
@@ -8,15 +7,11 @@ const MIME_TYPES = {
     'image/gif': 'gif',
 }
 
-
 const storage = multer.diskStorage({
     destination: (req, file, callback) => {
+        console.log('TESTSSSTT')
 
-        const token = req.headers.authorization.split(' ')[1];
-        const decodedToken = jwt.verify(token, process.env.USER_TOKEN);
-        const userId = decodedToken.userId;
-
-        callback(null, `images/users/id-${userId}/publications`);
+        callback(null, `images/users/id-${req.body.userId}/publications`);
     },
     filename: (req, file, callback) => {
         const name = file.originalname.split(' ').join('_');
