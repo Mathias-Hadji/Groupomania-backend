@@ -12,6 +12,7 @@ const userCtrl = require('../controllers/user');
 
 // USER ROUTES
 router.get('/:id', auth, userCtrl.getOneUser);
+router.get('/likes/:id', auth, userCtrl.getAllLikesOfOneUser);
 
 router.post('/registration', userCtrl.registration);
 router.post('/login', userCtrl.login);

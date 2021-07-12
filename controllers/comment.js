@@ -2,9 +2,10 @@ const { sequelize, Comment, User } = require('../models');
 
 
 exports.createOneComment = (req, res, next) => {
+    const comment = req.body.comment
 
-    Comment.create({ user_id_comment: req.body.userId, publication_id_comment: req.params.id, comment: req.body.comment })
-    .then(() => res.status(201).json({ message: 'Commentaire créé avec succès !'}))
+    Comment.create({ user_id_comment: req.body.userId, publication_id_comment: req.body.publicationId, comment: req.body.comment })
+    .then(() => res.status(201).json({ message: 'Commentaire créé avec succès !', comment: comment}))
     .catch(err => res.status(401).json({ err }));
 }
 

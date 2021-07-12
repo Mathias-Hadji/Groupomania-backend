@@ -2,13 +2,21 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 
-const { sequelize, User, Session } = require('../models');
+const { sequelize, User, Like_publication } = require('../models');
 
 const createUserFolders = require('../middleware/createUserFolders');
 
 
 const regexpPassword = new RegExp('^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$', 'i');
 
+
+exports.getOneUser = (req, res, next) => {
+
+    User.findOne({ where: { id: req.params.id }, 
+        attributes: ['first_name_user', 'last_name_user', 'email_user', 'profile_pic_user', 'bio_user', 'is_admin', 'createdAt', 'updatedAt']})
+        .then(user => res.status(200).json(user))
+        .catch(err => res.status(401).json({ err }))
+}
 
 exports.registration = (req, res, next) => {
 
@@ -67,6 +75,7 @@ exports.login = (req, res, next) => {
                     return res.status(401).json({ notValid: 'Mot de passe incorrect.'})
                 } else {
                     res.status(200).json({
+                        userId: user.id,
                         token: jwt.sign(
                             { userId: user.id },
                             process.env.AUTH_TOKEN,
@@ -80,17 +89,6 @@ exports.login = (req, res, next) => {
         })
         .catch(err => res.status(500).json({ err }))
 }
-
-
-exports.getOneUser = (req, res, next) => {
-
-    User.findOne({ where: { id: req.params.id }, 
-        attributes: ['first_name_user', 'last_name_user', 'email_user', 'profile_pic_user', 'bio_user', 'is_admin', 'createdAt', 'updatedAt']})
-        .then(user => res.status(200).json(user))
-        .catch(err => res.status(401).json({ err }))
-}
-
-
 
 exports.modifyUserProfilePic = (req, res, next) => {
     User.findOne({ where: { id: req.params.id } })
@@ -178,7 +176,7 @@ exports.deleteOneUserAccount = (req, res, next) => {
     .then(user => {
 
         if(user.id != req.body.userId && user.is_admin != 1){
-            return res.status(401).json({ message: 'Action non autorisée !' }) 
+            return res.status(401).json({ errorMessage: 'Action non autorisée !' }) 
         }
 
         User.destroy({ where: { id: req.params.id } })
@@ -193,8 +191,16 @@ exports.deleteOneUserAccount = (req, res, next) => {
                 console.error(`Erreur à la suppression de l'élément ${dir}.`);
             }
         })
-        .then(() => res.status(201).json({ message: 'Compte supprimé avec succès !' }))
+        .then(() => res.status(201).json({ successMessage: 'Compte supprimé avec succès !' }))
         .catch(err => res.status(401).json({ err }))
     })
     .catch(err => res.status(500).json({ err }))
+}
+
+
+exports.getAllLikesOfOneUser = (req, res, next) => {
+
+    Like_publication.findAll({ where: { user_id: req.params.id } })
+    .then(likes => res.status(200).json(likes))
+    .catch(err => res.status(401).json({ err }));
 }
