@@ -1,117 +1,142 @@
 const { sequelize, Publication, User, Like_publication } = require('../models');
 const fs = require('fs');
 
-exports.createPublication = (req, res, next) => {
+exports.getOnePublication = async (req, res, next) => {
+    try {
+        const publication = await Publication.findOne({ where: { id: req.params.id },
+            include: {
+                model: User,
+                attributes: ['first_name_user', 'last_name_user', 'profile_pic_user', 'createdAt', 'updatedAt']
+            } 
+        })
+        return res.status(200).json(publication);
 
-    if(!req.file){
+    } catch(err){
+        return res.status(401).json('Requête non valide.');
+    }
 
-        Publication.create({ user_id_publication: req.body.userId, message_publication: req.body.message })
-        .then(() => res.status(201).json({ message: 'Publication créée avec succès !'}))
-        .catch(err => res.status(401).json({ err }));
+}
 
-    } else {
-        const imageUrl = `${req.protocol}://${req.get('host')}/images/users/id-${req.body.userId}/publications/${req.file.filename}`
+exports.getAllPublications = async (req, res, next) => {
+    try {
+        const publications = await Publication.findAll({ 
+            order: [['updatedAt', 'DESC']],
+            include: {
+                model: User,
+                attributes: [
+                    'first_name_user', 'last_name_user', 'profile_pic_user', 'createdAt', 'updatedAt'
+                ]
+            }
+        })
+        return res.status(200).json(publications);
 
-        Publication.create({ user_id_publication: req.body.userId, message_publication: req.body.message || ' ', image_publication: imageUrl })
-        .then(() => res.status(201).json({ message: 'Publication créée avec succès !'}))
-        .catch(err => res.status(401).json({ err }));  
+    } catch(err) {
+        return res.status(401).json('Requête non valide.');
     }
 }
 
 
-exports.getOnePublication = (req, res, next) => {
+exports.createPublication = async (req, res, next) => {
+    try {
+        const userId = req.body.userId;
+        const message = req.body.message;
 
-    Publication.findOne({ where: { id: req.params.id },
-        include: {
-            model: User,
-            attributes: ['first_name_user', 'last_name_user', 'profile_pic_user', 'createdAt', 'updatedAt']
-        } 
-    })
-    .then(publication => res.status(200).json(publication))
-    .catch(err => res.status(401).json({ err }))
-}
-
-
-exports.getAllPublications = (req, res, next) => {
-    Publication.findAll({ 
-        order: [['updatedAt', 'DESC']],
-        include: {
-            model: User,
-            attributes: [
-                'first_name_user', 'last_name_user', 'profile_pic_user', 'createdAt', 'updatedAt'
-            ]
-        }
-    })
-    .then(publications => res.status(200).json(publications))
-    .catch(err => res.status(500).json({ err }))
-}
-
-
-
-exports.deleteOnePublication = (req, res, next) => {
-
-    Publication.findOne({ where: { id: req.params.id } })
-    .then(publication => {
-
-        if(!publication){
-            return res.status(401).json({ message: 'Publication non trouvée !' })
+        const user = await User.findOne({ where: { id: userId} })
+        if(user.id != userId && user.is_admin != 1){
+            let e = new Error('Action non autorisée !');
+            e.name = 'UnauthorizedError';
+            throw e;
         }
 
-        User.findOne({ where: { id: req.body.userId } })
-        .then(user => {
+        if(!req.file){
+            await Publication.create({ user_id_publication: userId, message_publication: message });
+            res.status(201).json({ message: 'Publication créée avec succès !'});
+    
+        } else {
+            const imageUrl = `${req.protocol}://${req.get('host')}/images/users/id-${userId}/publications/${req.file.filename}`
+            await Publication.create({ user_id_publication: userId, message_publication: message || ' ', image_publication: imageUrl || ' ' })
+            res.status(201).json({ message: 'Publication créée avec succès !'})
+        }
 
-            if(user.id != publication.user_id_publication && user.is_admin != 1){
-                return res.status(401).json({ message: 'Action non autorisée !' })
-            }
+    } catch(err) {
 
-            // Delete publication contain file
-            if(publication.image_publication){
-                const filename = publication.image_publication.split('/publications/')[1];
+        if(err.name === 'UnauthorizedError'){
+            return res.status(401).json(err.message);
+        }
 
-                fs.unlink(`images/users/id-${req.body.userId}/publications/${filename}`, () => {
-                    Publication.destroy({ where: { id: req.params.id } })
-                    .then(() => res.status(201).json({ message: 'Publication supprimée avec succès !' }))
-                    .catch(err => res.status(500).json({ err }))
-                })
-            
-            // Delete publication contain text only
-            } else {
-                Publication.destroy({ where: { id: req.params.id } })
-                .then(() => res.status(201).json({ message: 'Publication supprimée avec succès !' }))
-                .catch(err => res.status(500).json({ err }))
-            }
-        })
-        .catch(err => res.status(401).json({ err }))
-    })
-    .catch(err => res.status(500).json({ err }))
+        else {
+            return res.status(401).json('Requête non valide.');
+        }
+    }
+}
+
+exports.deleteOnePublication = async (req, res, next) => {
+    try {
+        const userId = req.body.userId;
+
+        const user = await User.findOne({ where: { id: userId } })
+        const publication = await Publication.findOne({ where: { id: req.params.id } })
+
+        if(user.id != publication.user_id_publication && user.is_admin != 1){
+            let e = new Error('Action non autorisée !');
+            e.name = 'UnauthorizedError';
+            throw e;
+        }
+
+        // Delete publication with file
+        if(publication.image_publication){
+            const filename = publication.image_publication.split('/publications/')[1];
+            fs.unlink(`images/users/id-${userId}/publications/${filename}`, () => {});
+
+            await Publication.destroy({ where: { id: req.params.id } });
+            res.status(201).json({ message: 'Publication supprimée avec succès !' });
+
+        // Delete publication contain text only
+        } else {
+            await Publication.destroy({ where: { id: req.params.id } });
+            res.status(201).json({ message: 'Publication supprimée avec succès !' });
+        }
+
+    } catch(err){
+        
+        if(err.name === 'UnauthorizedError'){
+            return res.status(401).json(err.message);
+        }
+
+        else {
+            return res.status(401).json('Requête non valide.');
+        }
+    }
 }
 
 
-exports.getAllLikesOfOnePublication = (req, res, next) => {
-    Like_publication.findAll({ where: { publication_id: req.params.publicationId } })
-    .then(likes => res.status(200).json(likes))
-    .catch(err => res.status(401).json({ err }));
+exports.getAllLikesOfOnePublication = async (req, res, next) => {
+    try {
+        const likes = await Like_publication.findAll({ where: { publication_id: req.params.publicationId } });
+        return res.status(200).json(likes);
+
+    } catch(err) {
+        return res.status(401).json('Requête non valide.');
+    }
 }
 
 
-exports.addOneLikeToggle = (req, res, next) => {
 
-    // Get All Likes of One User
-    Like_publication.findOne({ where: { publication_id: req.body.publicationId, user_id: req.body.userId } })
-    .then(like => {
+exports.addOneLikeToggle = async (req, res, next) => {
+    try {
+        const like = await Like_publication.findOne({ where: { publication_id: req.body.publicationId, user_id: req.body.userId } });
 
         // Add like
         if(!like){
-            Like_publication.create({ user_id: req.body.userId, publication_id: req.body.publicationId })
-            .then(() => res.status(201).json({ message: 'Like ajouté avec succès !' }))
-            .catch(err => res.status(401).json({ err }))
+            await Like_publication.create({ user_id: req.body.userId, publication_id: req.body.publicationId });
+            return res.status(201).json({ message: 'Like ajouté avec succès !' });
 
         // Remove Like
         } else {
-            Like_publication.destroy({ where: { user_id: req.body.userId, publication_id: req.body.publicationId } })
-            .then(() => res.status(201).json({ message: 'Like retiré avec succès !' }))
-            .catch(err => res.status(401).json({ err }))
+            Like_publication.destroy({ where: { user_id: req.body.userId, publication_id: req.body.publicationId } });
+            return res.status(201).json({ message: 'Like retiré avec succès !' });
         }
-    })
-    .catch((err) => res.status(500).json({ err }));
+    } catch (err) {
+        return res.status(401).json('Requête non valide.');
+    }
 }

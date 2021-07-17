@@ -92,13 +92,16 @@ module.exports = (sequelize, DataTypes) => {
       field: "profile_pic_user"
     },
     bio_user: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING,
       allowNull: true,
       defaultValue: "Aucune description",
       primaryKey: false,
       autoIncrement: false,
       comment: null,
       field: "bio_user",
+      validate: {
+        max: 255,
+      }
     },
     is_admin: {
       type: DataTypes.INTEGER(1),
