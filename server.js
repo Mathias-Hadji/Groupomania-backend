@@ -17,6 +17,7 @@ util = require('util');
 const userRoutes = require('./routes/user');
 const publicationRoutes = require('./routes/publication');
 const commentRoutes = require('./routes/comment');
+const likeRoutes = require('./routes/like');
 const sessionRoutes = require('./routes/session');
 
 // Express App
@@ -50,6 +51,7 @@ app.use(xssClean());
 app.use('/api/user', userRoutes);
 app.use('/api/publication', publicationRoutes);
 app.use('/api/comment', commentRoutes);
+app.use('/api/like', likeRoutes);
 app.use('/api/session', sessionRoutes);
 
 // Server

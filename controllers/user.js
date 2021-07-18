@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 
-const { sequelize, User, Like_publication } = require('../models');
+const { sequelize, User} = require('../models');
 
 const createUserFolders = require('../middleware/createUserFolders');
 
@@ -12,7 +12,7 @@ exports.getOneUser = async (req, res, next) => {
         const user = await User.findOne({ where: { id: req.params.id }, 
             attributes: ['first_name_user', 'last_name_user', 'email_user', 'profile_pic_user', 'bio_user', 'is_admin', 'createdAt', 'updatedAt']});
         return res.status(200).json(user);
-        
+
     } catch(err) {
         return res.status(401).json('Requête non valide.');
     }
@@ -239,16 +239,5 @@ exports.deleteOneUserAccount = async (req, res, next) => {
         else {
             return res.status(401).json('Requête non valide.');
         }
-    }
-}
-
-
-exports.getAllLikesOfOneUser = async (req, res, next) => {
-    try {
-        const likes = await Like_publication.findAll({ where: { user_id: req.params.id } });
-        return res.status(200).json(likes);
-
-    } catch(err){
-        return res.status(401).json('Requête non valide.');
     }
 }
