@@ -30,19 +30,13 @@ module.exports = (sequelize, DataTypes) => {
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: null,
       primaryKey: true,
       autoIncrement: true,
-      comment: null,
       field: "id"
     },
     user_id_publication: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: null,
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "user_id_publication",
       references: {
         model: 'Users', // name of Target model
@@ -52,10 +46,6 @@ module.exports = (sequelize, DataTypes) => {
     message_publication: {
       type: DataTypes.TEXT,
       allowNull: true,
-      defaultValue: null,
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "message_publication",
       validate: {
         len: [1, 500],
@@ -64,10 +54,6 @@ module.exports = (sequelize, DataTypes) => {
     image_publication: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      defaultValue: null,
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "image_publication",
       validate: {
         len: [1, 500],
@@ -76,10 +62,6 @@ module.exports = (sequelize, DataTypes) => {
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: null,
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "createdAt",
   
       get() {
@@ -89,10 +71,6 @@ module.exports = (sequelize, DataTypes) => {
     updatedAt: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: null,
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "updatedAt",
 
       get() {

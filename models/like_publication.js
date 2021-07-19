@@ -23,19 +23,13 @@ module.exports = (sequelize, DataTypes) => {
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: null,
       primaryKey: true,
       autoIncrement: true,
-      comment: null,
       field: "id"
     },
     user_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: null,
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "user_id",
       references: {
         key: "id",
@@ -45,10 +39,6 @@ module.exports = (sequelize, DataTypes) => {
     publication_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: null,
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "publication_id",
       references: {
         key: "id",
@@ -58,19 +48,11 @@ module.exports = (sequelize, DataTypes) => {
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: null,
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "createdAt"
     },
     updatedAt: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: null,
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "updatedAt"
     }
   }, {

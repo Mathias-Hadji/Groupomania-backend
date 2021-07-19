@@ -21,19 +21,13 @@ module.exports = (sequelize, DataTypes) => {
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: null,
       primaryKey: true,
       autoIncrement: true,
-      comment: null,
       field: "id"
     },
     user_id_session: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: null,
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "user_id_session",
       references: {
         key: "id",
@@ -43,29 +37,17 @@ module.exports = (sequelize, DataTypes) => {
     token_auth: {
       type: DataTypes.STRING(255),
       allowNull: false,
-      defaultValue: null,
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "token_auth",
       unique: "token_auth"
     },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: null,
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "createdAt"
     },
     updatedAt: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: null,
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "updatedAt"
     }
   }, {

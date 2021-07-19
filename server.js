@@ -57,6 +57,15 @@ app.use('/api/session', sessionRoutes);
 // Server
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-    console.log(`Server started on port ${PORT}`);
+
+const db = require('./models');
+
+db.sequelize.sync().then(() => {
+    app.listen(PORT, () => {
+        console.log(`Server started on port ${PORT}`);
+    })
 })
+
+// app.listen(PORT, () => {
+//     console.log(`Server started on port ${PORT}`);
+// })

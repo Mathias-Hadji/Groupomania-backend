@@ -27,19 +27,13 @@ module.exports = (sequelize, DataTypes) => {
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: null,
       primaryKey: true,
       autoIncrement: true,
-      comment: null,
       field: "id"
     },
     first_name_user: {
       type: DataTypes.STRING(255),
       allowNull: false,
-      defaultValue: null,
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "first_name_user",
       validate: {
         len: [1, 50],
@@ -49,10 +43,6 @@ module.exports = (sequelize, DataTypes) => {
     last_name_user: {
       type: DataTypes.STRING(255),
       allowNull: false,
-      defaultValue: null,
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "last_name_user",
       validate: {
         len: [1, 50],
@@ -62,10 +52,6 @@ module.exports = (sequelize, DataTypes) => {
     email_user: {
       type: DataTypes.STRING(255),
       allowNull: false,
-      defaultValue: null,
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "email_user",
       unique: "email_user",
       validate: {
@@ -76,28 +62,17 @@ module.exports = (sequelize, DataTypes) => {
     password_user: {
       type: DataTypes.STRING(255),
       allowNull: false,
-      defaultValue: null,
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "password_user",
     },
     profile_pic_user: {
       type: DataTypes.STRING(255),
       allowNull: false,
-      defaultValue: null,
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "profile_pic_user"
     },
     bio_user: {
       type: DataTypes.STRING,
       allowNull: true,
       defaultValue: "Aucune description",
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "bio_user",
       validate: {
         max: 255,
@@ -107,27 +82,16 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER(1),
       allowNull: false,
       defaultValue: "0",
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "is_admin"
     },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: null,
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "createdAt"
     },
     updatedAt: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: null,
-      primaryKey: false,
-      autoIncrement: false,
-      comment: null,
       field: "updatedAt"
     },
   }, {
