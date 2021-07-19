@@ -1,7 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
-const CryptoJS = require('crypto-js');
 
 const { sequelize, User} = require('../models');
 
@@ -35,7 +34,7 @@ exports.registration = async (req, res, next) => {
             password_user: hash,
             profile_pic_user: profilePicByDefault,
         }
-        
+
         const createUser = await User.create(objUser)
         createUserFolders(createUser)
         return res.status(201).json({ message: 'Utilisateur enregistré avec succès !' })
