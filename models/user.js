@@ -10,16 +10,16 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       models.User.hasMany(models.Publication, {
-        foreignKey: 'user_id_publication' 
+        foreignKey: 'user_id_publication',
       });
       models.User.hasMany(models.Comment, {
-        foreignKey: 'user_id_comment' 
+        foreignKey: 'user_id_comment',
       });
       models.User.hasMany(models.Like_publication, {
-        foreignKey: 'user_id' 
+        foreignKey: 'user_id',
       });
       models.User.hasOne(models.Session, {
-        foreignKey: 'user_id_session' 
+        foreignKey: 'user_id_session',
       });
     }
   };
@@ -29,7 +29,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       primaryKey: true,
       autoIncrement: true,
-      field: "id"
+      field: "id",
     },
     first_name_user: {
       type: DataTypes.STRING(255),

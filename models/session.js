@@ -12,8 +12,10 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       models.Session.belongsTo(models.User, {
-        foreignKey: 'user_id_session',
+        foreignKey: 'user_id_session', 
         allowNull: false,
+        onUpdate: 'cascade', 
+        onDelete: 'cascade',
       })
     }
   };
@@ -23,7 +25,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       primaryKey: true,
       autoIncrement: true,
-      field: "id"
+      field: "id",
     },
     user_id_session: {
       type: DataTypes.INTEGER,

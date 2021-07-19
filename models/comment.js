@@ -13,11 +13,14 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       models.Comment.belongsTo(models.User, {
         foreignKey : 'user_id_comment',
-        allowNull: false
+        onUpdate: 'cascade', 
+        onDelete: 'cascade',
       });
       models.Comment.belongsTo(models.Publication, {
         foreignKey : 'publication_id_comment',
-        allowNull: false
+        allowNull: false,
+        onUpdate: 'cascade', 
+        onDelete: 'cascade',
       });
     }
   };

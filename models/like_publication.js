@@ -11,11 +11,15 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       models.Like_publication.belongsTo(models.User, {
         foreignKey : 'user_id',
-        allowNull: false
+        allowNull: false,
+        onUpdate: 'cascade', 
+        onDelete: 'cascade',
       });
       models.Like_publication.belongsTo(models.Publication, {
         foreignKey : 'publication_id',
-        allowNull: false
+        allowNull: false,
+        onUpdate: 'cascade', 
+        onDelete: 'cascade',
       });
     }
   };
