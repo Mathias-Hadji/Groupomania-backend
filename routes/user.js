@@ -6,12 +6,9 @@ const multerProfilePic = require('../middleware/multer-config-profile-pic');
 
 const userCtrl = require('../controllers/user');
 
-//var multer  = require('multer');
-//var upload = multer();
-//upload.single('image')
-
 // USER ROUTES
 router.get('/:id', auth, userCtrl.getOneUser);
+router.get('/', auth, userCtrl.getAllUsers);
 
 router.post('/registration', userCtrl.registration);
 router.post('/login', userCtrl.login);

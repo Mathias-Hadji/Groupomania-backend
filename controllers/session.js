@@ -2,13 +2,12 @@ const { sequelize, Session, User } = require('../models');
 
 exports.getOneSession = async (req, res, next) => {
     try {
-        const session = await Session.findOne({ where: { token_auth : req.params.id } });
+        const session = await Session.findOne({ where: { token_auth : req.params.token } });
         res.status(200).json(session);
     } catch(err){
         return res.status(401).json('Requête non valide.');
     }
 }
-
 
 
 exports.createSession = async (req, res, next) => {

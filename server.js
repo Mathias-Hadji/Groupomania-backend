@@ -5,13 +5,7 @@ const helmet = require('helmet');
 const xssClean = require('xss-clean');
 const path = require('path');
 const cors = require('cors');
-
-const bodyParser = require('body-parser');
-var multer = require('multer');
-var upload = multer();
-var formidable = require('formidable'),
-http = require('http'),
-util = require('util');
+const rateLimit = require('express-rate-limit');
 
 // Routes
 const userRoutes = require('./routes/user');
@@ -47,25 +41,29 @@ app.use(helmet());
 // Protection xss
 app.use(xssClean());
 
-// Routes
+// Request Limiter
+const apiLimiter = rateLimit({
+    windowMs: 10000, // 10 seconds window
+    max: 1000, // start blocking after 1000 requests form per IP
+    message: "Too many request from this IP, please wait and try again later."
+});
+app.use(apiLimiter);
+
+
+// API Routes
 app.use('/api/user', userRoutes);
 app.use('/api/publication', publicationRoutes);
 app.use('/api/comment', commentRoutes);
 app.use('/api/like', likeRoutes);
 app.use('/api/session', sessionRoutes);
 
-// Server
+// Server PORT
 const PORT = process.env.PORT || 3000;
 
-
+// Start server + auto generate tables structure with sequelize models
 const db = require('./models');
-
 db.sequelize.sync().then(() => {
     app.listen(PORT, () => {
         console.log(`Server started on port ${PORT}`);
-    })
-})
-
-// app.listen(PORT, () => {
-//     console.log(`Server started on port ${PORT}`);
-// })
+    });
+});

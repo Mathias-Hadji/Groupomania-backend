@@ -4,7 +4,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const sessionCtrl = require('../controllers/session');
 
-router.get('/:id', auth, sessionCtrl.getOneSession);
+router.get('/:token', auth, sessionCtrl.getOneSession);
 
 router.post('/', auth, sessionCtrl.createSession);
 router.delete('/:id', auth, sessionCtrl.deleteSession);

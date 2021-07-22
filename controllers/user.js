@@ -6,6 +6,16 @@ const { sequelize, User} = require('../models');
 
 const createUserFolders = require('../middleware/createUserFolders');
 
+exports.getAllUsers = async (req, res, next) => {
+    try {
+        const users = await User.findAll({ 
+            attributes: ['first_name_user', 'last_name_user', 'email_user', 'profile_pic_user', 'bio_user', 'is_admin', 'createdAt', 'updatedAt']});
+        return res.status(200).json(users);
+
+    } catch(err) {
+        return res.status(401).json('Requête non valide.');
+    }
+}
 
 exports.getOneUser = async (req, res, next) => {
     try {
@@ -37,7 +47,7 @@ exports.registration = async (req, res, next) => {
 
         const createUser = await User.create(objUser)
         createUserFolders(createUser)
-        return res.status(201).json({ message: 'Utilisateur enregistré avec succès !' })
+        return res.status(201).json({ message: 'Compte créé avec succès !' })
 
     } catch(err) {
 
@@ -63,7 +73,7 @@ exports.login = async (req, res, next) => {
 
         const user = await User.findOne({ where: { email_user: email } })
         if(!user){
-            let e = new Error('Email incorrect.');
+            let e = new Error("L'adresse email et le mot de passe que vous avez entrés ne correspondent pas à ceux présents dans nos fichiers. Veuillez vérifier et réessayer.");
             e.name = 'EmailError';
             throw e;
         }
@@ -104,6 +114,11 @@ exports.modifyUserBio = async (req, res, next) => {
         const bio = req.body.bioUser;
 
         const user = await User.findOne({ where: { id: req.params.id } })
+        if(!user){
+            let e = new Error('User ID incorrect.');
+            e.name = 'UserIdNotFound';
+            throw e;
+        }
         
         if(user.id != userId && user.is_admin != 1){
             let e = new Error('Action non autorisée !');
@@ -120,6 +135,10 @@ exports.modifyUserBio = async (req, res, next) => {
         res.status(201).json({ successMessage: 'Bio modifiée avec succès !', bio: bio })
 
     } catch(err){
+
+        if(err.name === 'UserIdNotFound'){
+            return res.status(401).json(err.message);
+        }
 
         if(err.name === 'UnauthorizedError'){
             return res.status(401).json(err.message);
@@ -175,7 +194,12 @@ exports.modifyUserPassword = async (req, res, next) => {
         const newPassword = req.body.inputUserNewPassword;
 
         const user = await User.findOne({ where: { id: req.params.id } });
-
+        if(!user){
+            let e = new Error('User ID incorrect.');
+            e.name = 'UserIdNotFound';
+            throw e;
+        }
+        
         if(user.id != userId && user.is_admin != 1){
             let e = new Error('Action non autorisée !');
             e.name = 'UnauthorizedError';
@@ -202,6 +226,10 @@ exports.modifyUserPassword = async (req, res, next) => {
 
     } catch(err) {
 
+        if(err.name === 'UserIdNotFound'){
+            return res.status(401).json(err.message);
+        }
+
         if(err.name === 'UnauthorizedError' || err.name === 'PasswordNotMatchError' || err.name === 'PasswordTooLasyError'){
             return res.status(401).json(err.message);
         }
@@ -218,6 +246,11 @@ exports.deleteOneUserAccount = async (req, res, next) => {
         const dir = `images/users/id-${req.params.id}`;
 
         const user = await User.findOne({ where: { id: req.params.id } });
+        if(!user){
+            let e = new Error('User ID incorrect.');
+            e.name = 'UserIdNotFound';
+            throw e;
+        }
 
         if(user.id != userId && user.is_admin != 1){
             let e = new Error('Action non autorisée !');
@@ -232,6 +265,9 @@ exports.deleteOneUserAccount = async (req, res, next) => {
         res.status(201).json({ successMessage: 'Compte supprimé avec succès !' });
 
     } catch(err) {
+        if(err.name === 'UserIdNotFound'){
+            return res.status(401).json(err.message);
+        }
 
         if(err.name === 'UnauthorizedError'){
             return res.status(401).json(err.message);

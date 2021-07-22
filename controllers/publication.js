@@ -9,12 +9,24 @@ exports.getOnePublication = async (req, res, next) => {
                 attributes: ['first_name_user', 'last_name_user', 'profile_pic_user', 'createdAt', 'updatedAt']
             } 
         })
+
+        if(!publication){
+            let e = new Error("Publication ID incorrect.");
+            e.name = 'PublicationIdNotFound';
+            throw e;
+        }
+
         return res.status(200).json(publication);
 
     } catch(err){
-        return res.status(401).json('Requête non valide.');
-    }
+        if(err.name === 'PublicationIdNotFound'){
+            return res.status(401).json(err.message);
+        }
 
+        else {
+            return res.status(401).json('Requête non valide.');
+        }
+    }
 }
 
 exports.getAllPublications = async (req, res, next) => {
@@ -53,6 +65,7 @@ exports.createPublication = async (req, res, next) => {
             res.status(201).json({ message: 'Publication créée avec succès !'});
     
         } else {
+
             const imageUrl = `${req.protocol}://${req.get('host')}/images/users/id-${userId}/publications/${req.file.filename}`
             await Publication.create({ user_id_publication: userId, message_publication: message || ' ', image_publication: imageUrl || ' ' })
             res.status(201).json({ message: 'Publication créée avec succès !'})
@@ -74,8 +87,15 @@ exports.deleteOnePublication = async (req, res, next) => {
     try {
         const userId = req.body.userId;
 
-        const user = await User.findOne({ where: { id: userId } })
-        const publication = await Publication.findOne({ where: { id: req.params.id } })
+        const user = await User.findOne({ where: { id: userId } });
+        
+        const publication = await Publication.findOne({ where: { id: req.params.id } });
+
+        if(!publication){
+            let e = new Error("Publication ID incorrect.");
+            e.name = 'PublicationIdNotFound';
+            throw e;
+        }
 
         if(user.id != publication.user_id_publication && user.is_admin != 1){
             let e = new Error('Action non autorisée !');
@@ -98,6 +118,10 @@ exports.deleteOnePublication = async (req, res, next) => {
         }
 
     } catch(err){
+
+        if(err.name === 'PublicationIdNotFound'){
+            return res.status(401).json(err.message);
+        }
         
         if(err.name === 'UnauthorizedError'){
             return res.status(401).json(err.message);

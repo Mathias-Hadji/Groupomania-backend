@@ -47,6 +47,13 @@ exports.deleteOneComment = async (req, res, next) => {
         const userId = req.body.userId
 
         const comment = await Comment.findOne({ where: { id: req.params.id } });
+
+        if(!comment){
+            let e = new Error("Commentaire ID incorrect.");
+            e.name = 'CommentIdNotFound';
+            throw e;
+        }
+
         const user = await User.findOne({ where: { id: userId } });
     
         if(user.id != comment.user_id_comment && user.is_admin != 1){
@@ -58,6 +65,10 @@ exports.deleteOneComment = async (req, res, next) => {
         return res.status(201).json({ message: 'Commentaire supprimé avec succès !'});
 
     } catch(err){
+        
+        if(err.name === 'CommentIdNotFound'){
+            return res.status(401).json(err.message);
+        }
 
         if(err.name === 'UnauthorizedError'){
             return res.status(401).json(err.message);
