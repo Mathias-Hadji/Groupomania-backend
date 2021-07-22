@@ -1,5 +1,3 @@
 /.DS_Store
 /node_modules
-bdd
-/config/.env
-/config/commands.txt
+/config
